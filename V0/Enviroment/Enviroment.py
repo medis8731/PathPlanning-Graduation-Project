@@ -1,7 +1,7 @@
 import random
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon, Rectangle
-import numpy as np
+
 class Enviroment:
     def __init__(self, start, goal, MapDimensions, obsdim, obsnum):
         #Set locations and dimensions
@@ -17,7 +17,7 @@ class Enviroment:
         self.startColor = '#FFB6C1'
         self.goalColor = '#008000'
 
-        #Set radious of nodes and start and end
+        #Set radius of nodes and start and end
         self.goalR = 2
         self.startR = 2
         self.nodeR = 2
@@ -27,12 +27,7 @@ class Enviroment:
         uppercornery = int(random.uniform(1, self.maph -  self.obsdim[1]))
         return (uppercornerx, uppercornery)
 
-    def createRandomObstaclesV0(self):
-        for i in range(0,self.obsnum):
-            self.obs.append(self.makeRandomRect())
-
     def createRandomObstacles(self):
-        obs = []
         for i in range(0, self.obsnum):
             rectang = None
             startgoalcol = True
@@ -45,9 +40,8 @@ class Enviroment:
                     startgoalcol = True
                 else:
                     startgoalcol = False
-            obs.append(rectangCor)
-        self.obs = obs.copy()
-        return obs
+            self.obs.append(rectangCor)
+        return self.obs
 
     def recConrner(self,rectangle):
         coords = rectangle.get_bbox().get_points()
@@ -63,22 +57,13 @@ class Enviroment:
         if (circleDistanceX <= (recW/2)): return True
         if (circleDistanceY <= (recH/2)) : return True
 
-        cornerDistance_sq = (circleDistanceX - recW/2)^2 +(circleDistanceY - recH/2)**2
+        cornerDistance_sq = (circleDistanceX - recW/2)**2 +(circleDistanceY - recH/2)**2
 
         return (cornerDistance_sq <= (cirR**2))
 
-    def showMap(self):
-        self.fig ,self.ax = plt.subplots()
-        self.ax.set_xlim(0,env.mapw)
-        self.ax.set_ylim(0,env.maph)
-        self.ax.add_patch(Circle(self.start,self.startR,color=self.startColor))
-        self.ax.add_patch(Circle(self.goal,self.goalR,color= self.goalColor))
-        for obs in env.obs:
-        #add rectangle to plot
-            self.ax.add_patch(Rectangle((obs[0], obs[1]), env.obsdim[1], env.obsdim[0]))
-        plt.show()    
+ 
 
-env = Enviroment((3,3),(50,50),(100,100),(6,6),50)
-env.createRandomObstacles()
-env.showMap()
+# env = Enviroment((3,3),(50,50),(100,100),(6,6),50)
+# env.createRandomObstacles()
+# env.showMap(True) 
 
