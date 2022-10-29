@@ -18,9 +18,9 @@ class Enviroment:
         self.goalColor = '#008000'
 
         #Set radius of nodes and start and end
-        self.goalR = 2
-        self.startR = 2
-        self.nodeR = 2
+        self.goalR = 0.5
+        self.startR = 0.5
+        self.nodeR = 0.5
 
     def makeRandomRect(self):
         uppercornerx = int(random.uniform(1, self.mapw - self.obsdim[0]))
