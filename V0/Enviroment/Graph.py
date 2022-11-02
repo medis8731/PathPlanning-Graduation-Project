@@ -4,6 +4,8 @@ from matplotlib.patches import Circle, Rectangle
 import numpy as np
 from Enviroment import Enviroment
 from matplotlib import collections  as mc
+from Line import Line
+
 class Graph(Enviroment):
     def createGraph(self):
 
@@ -35,6 +37,14 @@ class Graph(Enviroment):
         y = int(random.uniform(0, self.maph))
         return (x,y)
 
+    # def randomVertex(self):
+    #     rx = random.random()
+    #     ry = random.random()
+
+    #     posx = self.start[0] - (self.sx / 2.) + rx * self.sx * 2
+    #     posy = self.start[1] - (self.sy / 2.) + ry * self.sy * 2
+    #     return posx, posy
+
     def add_edge(self, idx1, idx2, cost):
         self.edges.append((idx1, idx2))
         self.neighbors[idx1].append((idx2, cost))
@@ -53,7 +63,7 @@ class Graph(Enviroment):
         return False
 
     def createRandomNodes(self):
-        for i in range(100):
+        for i in range(200):
             node = self.randomVertex()
             while(self.isInObstacle(node)):
                 node = self.randomVertex()
@@ -61,15 +71,93 @@ class Graph(Enviroment):
             self.add_vex(node)
     def connectAllNodes(self):
         vertices = self.vertices.copy()
-        for node1 in self.vertices:
-            for node2 in vertices[self.vex2idx[node1]:]:
-                self.add_edge(self.vex2idx[node1],self.vex2idx[node2],0)
+        for node1 in self.vertices[0:50]:
+            for node2 in vertices[51:]:
+                if(not self.isThroughObstacle(node1,node2)):
+                    self.add_edge(self.vex2idx[node1],self.vex2idx[node2],0)
+                    
+    def distance(self,x, y):
+        return np.linalg.norm(np.array(x) - np.array(y))
 
-    # def connetRandomNodes(self):
-    #     for vert in self.vertices[1:]:
-    #         x_values = [point1[0], point2[0]]
-    #         y_values = [point1[1], point2[1]]
+    def newVertex(self,randvex, nearvex, stepSize):
+        dirn = np.array(randvex) - np.array(nearvex)
+        length = np.linalg.norm(dirn)
+        dirn = (dirn / length) * min (stepSize, length)
 
+        newvex = (nearvex[0]+dirn[0], nearvex[1]+dirn[1])
+        return newvex   
+
+    def nearest(self, vex):
+        Nvex = None
+        Nidx = None
+        minDist = float("inf")
+
+        for idx, v in enumerate(self.vertices):
+            if self.isThroughObstacle(v,vex):
+                continue
+
+            dist = self.distance(v, vex)
+            if dist < minDist:
+                minDist = dist
+                Nidx = idx
+                Nvex = v
+
+        return Nvex, Nidx
+
+    def isThroughObstacle(self,node1,node2):
+        line = Line(node1, node2)
+        for obs in self.obs:
+            #node1,node2,recXY,w,h
+            if line.Intersection(node1,node2,obs,self.obsdim):
+                return True
+        return False
+
+    # def RRT(self, n_iter, stepSize):
+    #     for _ in range(n_iter):
+    #         randvex = self.randomVertex()
+    #         if self.isInObstacle(randvex):
+    #             continue
+
+    #         nearvex, nearidx = self.nearest(randvex)
+    #         if nearvex is None:
+    #             continue
+
+    #         newvex = self.newVertex(randvex, nearvex, stepSize)
+
+    #         newidx = self.add_vex(newvex)
+    #         dist = self.distance(newvex, nearvex)
+    #         self.add_edge(newidx, nearidx, dist)
+
+    #         dist = self.distance(newvex, self.goal)
+    #         if dist < 2 * self.goalR:
+    #             endidx = self.add_vex(self.goal)
+    #             self.add_edge(newidx, endidx, dist)
+    #             self.success = True
+    #             print('success')
+    #             break
+    def RRT(self, n_iter, stepSize):
+        for _ in range(n_iter):
+            randvex = self.randomVertex()
+            if self.isInObstacle(randvex):
+                continue
+
+            nearvex, nearidx = self.nearest(randvex)
+            if nearvex is None:
+                continue
+
+            newvex = self.newVertex(randvex, nearvex, stepSize)
+
+            newidx = self.add_vex(newvex)
+            dist = self.distance(newvex, nearvex)
+            self.add_edge(newidx, nearidx, dist)
+
+            dist = self.distance(newvex, self.goal)
+            if dist < 2 * self.goalR:
+                endidx = self.add_vex(self.goal)
+                self.add_edge(newidx, endidx, dist)
+                self.success = True
+                print('success')
+                break    
     def showMap(self,showWhileadding=False):
         self.fig ,self.ax = plt.subplots()
         self.ax.set_xlim(0,self.mapw)
@@ -84,28 +172,22 @@ class Graph(Enviroment):
             self.ax.add_patch(Circle((nodes[0],nodes[1]),0.5,color="#FF0000"))
             # plt.pause(0.05)
         lines = [(self.vertices[edge[0]], self.vertices[edge[1]]) for edge in self.edges]
-        lc = mc.LineCollection(lines, colors='green', linewidths=0.1)
+        lc = mc.LineCollection(lines, colors='green', linewidths=2)
         self.ax.add_collection(lc)    
         plt.show()
+     
+# if __name__ == '__main__':
 
-class Line():
-  ''' Define line '''
-  def __init__(self, p0, p1):
-        self.p = np.array(p0)
-        self.dirn = np.array(p1) - np.array(p0)
-        self.dist = np.linalg.norm(self.dirn)
-        self.dirn /= self.dist # normalize
-  def path(self, t):
-        return self.p + t * self.dirn
-
-start =(3,3)
-end = (50,50)
-mapDim = (100,100)
-obsDim = (6,6)
-obsNum = 50
-env = Graph(start,end,mapDim,obsDim,obsNum)
-env.createGraph()
-env.createRandomObstacles()   
-env.createRandomNodes()
-env.connectAllNodes()
-env.showMap(True)     
+#     start =(3,3)
+#     end = (50,50)
+#     mapDim = (100,100)
+#     obsDim = (6,6)
+#     obsNum = 50
+#     env = Graph(start,end,mapDim,obsDim,obsNum)
+#     env.createGraph()
+#     env.createRandomObstacles()  
+#     env.RRT(500,5)     
+#     # env.createRandomNodes()
+#     # env.connectAllNodes()
+#     env.showMap(True) 
+ 

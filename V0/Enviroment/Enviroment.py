@@ -18,7 +18,7 @@ class Enviroment:
         self.goalColor = '#008000'
 
         #Set radius of nodes and start and end
-        self.goalR = 0.5
+        self.goalR = 2
         self.startR = 0.5
         self.nodeR = 0.5
 
@@ -33,7 +33,7 @@ class Enviroment:
             startgoalcol = True
             while startgoalcol:
                 rectangCor = self.makeRandomRect()
-                rectang = Rectangle((rectangCor[0], rectangCor[1]), self.obsdim[1], self.obsdim[0])
+                rectang = Rectangle((rectangCor[0], rectangCor[1]), self.obsdim[1], self.obsdim[0],rotation_point='center')
                 center = rectang.get_center()
                 if self.circleInterRec(self.start[0],self.start[1],self.startR,center[0],center[1],self.obsdim[1], self.obsdim[0]) \
                      or self.circleInterRec(self.goal[0],self.goal[1],self.goalR,center[0],center[1],self.obsdim[1], self.obsdim[0]):
