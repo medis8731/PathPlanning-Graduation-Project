@@ -40,7 +40,6 @@ class Graph(Enviroment):
     # def randomVertex(self):
     #     rx = random.random()
     #     ry = random.random()
-
     #     posx = self.start[0] - (self.sx / 2.) + rx * self.sx * 2
     #     posy = self.start[1] - (self.sy / 2.) + ry * self.sy * 2
     #     return posx, posy
@@ -136,8 +135,11 @@ class Graph(Enviroment):
     #             print('success')
     #             break
     def RRT(self, n_iter, stepSize):
-        for _ in range(n_iter):
-            randvex = self.randomVertex()
+        for iteration in range(n_iter):
+            if iteration % 10 == 0:   
+                randvex = self.goal
+            else:
+                randvex = self.randomVertex()    
             if self.isInObstacle(randvex):
                 continue
 
