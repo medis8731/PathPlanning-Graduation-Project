@@ -8,7 +8,6 @@ from Line import Line
 
 class Graph(Enviroment):
     def createGraph(self):
-
         self.vertices = [self.start]
         self.edges = []
         self.success = False
@@ -62,12 +61,12 @@ class Graph(Enviroment):
         return False
 
     def createRandomNodes(self):
-        for i in range(200):
+        for _ in range(200):
             node = self.randomVertex()
             while(self.isInObstacle(node)):
                 node = self.randomVertex()
-
             self.add_vex(node)
+
     def connectAllNodes(self):
         vertices = self.vertices.copy()
         for node1 in self.vertices[0:50]:
@@ -111,29 +110,57 @@ class Graph(Enviroment):
                 return True
         return False
 
-    # def RRT(self, n_iter, stepSize):
-    #     for _ in range(n_iter):
-    #         randvex = self.randomVertex()
-    #         if self.isInObstacle(randvex):
-    #             continue
+    def RRT_star(self,n_iter,stepSize):
+        for _ in range(n_iter):
+            if _ % 10 == 0:            
+                randvex = self.goal
+            else:
+                randvex = self.randomVertex()
 
-    #         nearvex, nearidx = self.nearest(randvex)
-    #         if nearvex is None:
-    #             continue
+            if self.isInObstacle(randvex):
+                continue
 
-    #         newvex = self.newVertex(randvex, nearvex, stepSize)
+            nearvex, nearidx = self.nearest(randvex)
+            if nearvex is None:
+                continue
 
-    #         newidx = self.add_vex(newvex)
-    #         dist = self.distance(newvex, nearvex)
-    #         self.add_edge(newidx, nearidx, dist)
+            newvex = self.newVertex(randvex, nearvex, stepSize)
 
-    #         dist = self.distance(newvex, self.goal)
-    #         if dist < 2 * self.goalR:
-    #             endidx = self.add_vex(self.goal)
-    #             self.add_edge(newidx, endidx, dist)
-    #             self.success = True
-    #             print('success')
-    #             break
+            newidx = self.add_vex(newvex)
+            dist = self.distance(newvex, nearvex)
+            self.add_edge(newidx, nearidx, dist)
+            self.distances[newidx] = self.distances[nearidx] + dist
+
+            # update nearby vertices distance (if shorter)
+            for vex in self.vertices:
+                if vex == newvex:
+                    continue
+
+                dist = self.distance(vex, newvex)
+                if dist > self.goalR:
+                    continue
+
+                if self.isThroughObstacle(vex, newvex):
+                    continue
+
+                idx = self.vex2idx[vex]
+                if self.distances[newidx] + dist < self.distances[idx]:
+                    self.add_edge(idx, newidx, dist)
+                    self.distances[idx] = self.distances[newidx] + dist
+
+            dist = self.distance(newvex, self.goal)
+            if dist < 2 * self.goalR:
+                endidx = self.add_vex(self.goal)
+                self.add_edge(newidx, endidx, dist)
+                try:
+                    self.distances[endidx] = min(self.distances[endidx], self.distances[newidx]+dist)
+                except:
+                    self.distances[endidx] = self.distances[newidx]+dist
+
+                self.success = True
+                # print('success')
+                # break
+
     def RRT(self, n_iter, stepSize):
         for iteration in range(n_iter):
             if iteration % 10 == 0:   
@@ -158,8 +185,9 @@ class Graph(Enviroment):
                 endidx = self.add_vex(self.goal)
                 self.add_edge(newidx, endidx, dist)
                 self.success = True
-                print('success')
-                break    
+                # print('success')
+                # break    
+    
     def showMap(self,showWhileadding=False):
         self.fig ,self.ax = plt.subplots()
         self.ax.set_xlim(0,self.mapw)
@@ -177,7 +205,31 @@ class Graph(Enviroment):
         lc = mc.LineCollection(lines, colors='green', linewidths=2)
         self.ax.add_collection(lc)    
         plt.show()
-     
+
+    # def RRT(self, n_iter, stepSize):
+    #     for _ in range(n_iter):
+    #         randvex = self.randomVertex()
+    #         if self.isInObstacle(randvex):
+    #             continue
+
+    #         nearvex, nearidx = self.nearest(randvex)
+    #         if nearvex is None:
+    #             continue
+
+    #         newvex = self.newVertex(randvex, nearvex, stepSize)
+
+    #         newidx = self.add_vex(newvex)
+    #         dist = self.distance(newvex, nearvex)
+    #         self.add_edge(newidx, nearidx, dist)
+
+    #         dist = self.distance(newvex, self.goal)
+    #         if dist < 2 * self.goalR:
+    #             endidx = self.add_vex(self.goal)
+    #             self.add_edge(newidx, endidx, dist)
+    #             self.success = True
+    #             print('success')
+    #             break
+         
 # if __name__ == '__main__':
 
 #     start =(3,3)

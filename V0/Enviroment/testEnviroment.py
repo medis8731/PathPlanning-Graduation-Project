@@ -25,7 +25,7 @@ class testEnviroment(unittest.TestCase):
         env = Graph(start,end,mapDim,obsDim,obsNum)
         env.createGraph()
         env.createRandomObstacles()  
-        env.RRT(500,5)     
+        env.RRT_star(1000,5)     
         env.showMap(True) 
 
 if __name__ == '__main__':
