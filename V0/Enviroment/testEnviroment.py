@@ -1,6 +1,6 @@
 import unittest
 from Graph import Graph
-
+import time
 class testEnviroment(unittest.TestCase):
 
     def test_sum(self):
@@ -13,7 +13,7 @@ class testEnviroment(unittest.TestCase):
         env.createGraph()
         env.createRandomObstacles()   
         env.createRandomNodes()
-        env.connectAllNodes()
+        # env.connectAllNodes()
         env.showMap(True)  
 
     def test_random_node_1(self):
@@ -24,8 +24,11 @@ class testEnviroment(unittest.TestCase):
         obsNum = 50
         env = Graph(start,end,mapDim,obsDim,obsNum)
         env.createGraph()
-        env.createRandomObstacles()  
-        env.RRT_star(1000,5)     
+        env.createRandomObstacles() 
+
+        start_time = time.time()
+        env.RRT_star(500,5)  
+        print("--- %s seconds ---" % (time.time() - start_time))    
         env.showMap(True,env.path) 
 
 if __name__ == '__main__':

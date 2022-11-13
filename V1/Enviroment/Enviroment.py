@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon, Rectangle
 
 class Enviroment:
-    def __init__(self, start, goal, MapDimensions, obsdim, obsnum):
+    def __init__(self, start, goal, MapDimensions, obsdim, obsnum,obs=[]):
         #Set locations and dimensions
         self.start = start
         self.goal = goal 
@@ -11,15 +11,15 @@ class Enviroment:
         self.maph, self.mapw = self.MapDimensions
         self.obsdim = obsdim
         self.obsnum = obsnum
-        self.obs = []
+        self.obs = obs
 
         #set color of start.goal and obstacles
-        self.startColor = '#FFB6C1'
-        self.goalColor = '#008000'
+        self.startColor = '#B200ED'
+        self.goalColor =  '#241571'
 
         #Set radius of nodes and start and end
         self.goalR = 2
-        self.startR = 0.5
+        self.startR = 1
         self.nodeR = 0.5
 
     def makeRandomRect(self):

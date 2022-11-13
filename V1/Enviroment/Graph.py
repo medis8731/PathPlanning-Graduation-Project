@@ -7,7 +7,9 @@ from Enviroment import Enviroment
 from matplotlib import collections  as mc
 from Line import Line
 from collections import deque
+import time
 
+from Solution import Solution
 """
 This is version 2 of my implementation for the RRT algorithm. 
 In this version I want to have a list of goals and simultaneasly try to get to each of the goals 
@@ -26,8 +28,10 @@ class Graph(Enviroment):
         # self.sx = self.goal[0] - self.start[0]
         # self.sy = self.goal[1] - self.start[1]
 
+
         self.nodeR = 1
         self.path = {k: None for k in self.goal}
+        self.pathCost = {k: float('inf') for k in self.goal}
 
     def add_vex(self, pos):
         try: #Check to see if Vertex already exists 
@@ -48,7 +52,6 @@ class Graph(Enviroment):
         self.edges.append((idx1, idx2))
         self.neighbors[idx1].append((idx2, cost))
         self.neighbors[idx2].append((idx1, cost))   
-
 
     def isInObstacle(self,vex):
         obstacles = self.obs
@@ -136,8 +139,8 @@ class Graph(Enviroment):
 
             for neighbor, cost in self.neighbors[curNode]:
                 newCost = dist[curNode] + cost
-                print("cost",cost)
-                print("dist",dist[neighbor])
+                # print("cost",cost)
+                # print("dist",dist[neighbor])
                 if newCost < dist[neighbor]:
                     dist[neighbor] = newCost
                     prev[neighbor] = curNode
@@ -149,6 +152,7 @@ class Graph(Enviroment):
             path.appendleft(self.vertices[curNode])
             curNode = prev[curNode]
         path.appendleft(self.vertices[curNode])
+        self.pathCost[goal] = newCost
         return list(path)
 
     def chooseRandGoal(self):
@@ -184,13 +188,67 @@ class Graph(Enviroment):
                     # break    
         self.pathSearch()
 
-    def showMap(self,showWhileadding=False,path=None):
+
+    def RRT_star(self,n_iter,stepSize):
+        for _ in range(n_iter):
+            if _ % 10 == 0:            
+                randvex = self.chooseRandGoal()
+            else:
+                randvex = self.randomVertex()
+
+            if self.isInObstacle(randvex):
+                continue
+
+            nearvex, nearidx = self.nearest(randvex)
+            if nearvex is None:
+                continue
+
+            newvex = self.newVertex(randvex, nearvex, stepSize)
+
+            newidx = self.add_vex(newvex)
+            dist = self.distanceNN(newvex, nearvex)
+            self.add_edge(newidx, nearidx, dist)
+            self.distances[newidx] = self.distances[nearidx] + dist
+
+            # update nearby vertices distance (if shorter)
+            for vex in self.vertices:
+                if vex == newvex:
+                    continue
+
+                dist = self.distanceNN(vex, newvex)
+                if dist > self.goalR:
+                    continue
+
+                if self.isThroughObstacle(vex, newvex):
+                    continue
+
+                idx = self.vex2idx[vex]
+                if self.distances[newidx] + dist < self.distances[idx]:
+                    self.add_edge(idx, newidx, dist)
+                    self.distances[idx] = self.distances[newidx] + dist
+
+            dist = self.distance(newvex, self.goal)
+            for i in range(len(dist)):
+                if dist[i] < 2 * self.goalR:
+                    endidx = self.add_vex(self.goal[i])
+                    self.add_edge(newidx, endidx, dist[i])
+                    try:
+                        self.distances[endidx] = min(self.distances[endidx], self.distances[newidx]+dist[i])
+                    except:
+                        self.distances[endidx] = self.distances[newidx]+dist[i]
+
+                    self.success[self.goal[i]] = True
+                # print('success')
+                # break
+        self.pathSearch()  
+    def showMap(self):
+        # plt.figure(i)
         self.fig ,self.ax = plt.subplots()
         self.ax.set_xlim(0,self.mapw)
         self.ax.set_ylim(0,self.maph)
         self.ax.add_patch(Circle(self.start,self.startR,color=self.startColor))
         patches = [plt.Circle(center, self.goalR) for center in self.goal]
-        coll = matplotlib.collections.PatchCollection(patches, facecolors='black')
+        coll = matplotlib.collections.PatchCollection(patches, facecolors=self.goalColor)
         self.ax.add_collection(coll)
         for obs in self.obs:
         #add rectangle to plot
@@ -207,17 +265,38 @@ class Graph(Enviroment):
                 pathC = self.path[goal]
                 paths = [(pathC[i], pathC[i+1]) for i in range(len(pathC)-1)]
                 lc2 = mc.LineCollection(paths, colors='pink', linewidths=2)
-                print("trying")
+                # print("trying")
                 self.ax.add_collection(lc2) 
-        plt.show()
+        # plt.show()
+listt = [(5,5),(50,50),(80,80),(10,70),(15,20),(90,10)]
+mapDim = (100,100)
+obsDim = (6,6)
+obsNum = 50
+paths = {}
+tic = time.perf_counter()
+start = listt[0]
+goal = listt.copy()
+goal.pop(0)
+env = Graph(start,goal,mapDim,obsDim,obsNum)
+env.createGraph()
+env.createRandomObstacles() 
+for i in range(1,len(listt)):
+    env.RRT_star(500,5) 
+    print(env.distances[env.vex2idx[listt[i]]])   
+    paths[start] = env.path.copy() 
+    env.showMap() 
+    start = listt[i]
+    goal = listt.copy()
+    goal.pop(i)
+    env = Graph(start,goal,mapDim,obsDim,obsNum)
+    
+    env.createGraph()
+    
+toc = time.perf_counter()
+print(f"Downloaded the tutorial in {toc - tic:0.4f} seconds")    
+plt.show()   
+sol = Solution(paths,[],listt,env.obs)    
+sol.showAllPaths()
 
-# start =(3,3)
-# end = (50,50)
-# mapDim = (100,100)
-# obsDim = (6,6)
-# obsNum = 50
-# env = Graph(start,[end,(80,80)],mapDim,obsDim,obsNum)
-# env.createGraph()
-# env.createRandomObstacles()  
-# env.RRT(1000,5)     
-# env.showMap(True,env.path) 
+
+   

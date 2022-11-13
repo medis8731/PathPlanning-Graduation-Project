@@ -6,6 +6,7 @@ from Enviroment import Enviroment
 from matplotlib import collections  as mc
 from Line import Line
 from collections import deque
+import time
 
 class Graph(Enviroment):
     def createGraph(self):
@@ -276,7 +277,6 @@ class Graph(Enviroment):
     #             break
          
 # if __name__ == '__main__':
-
 #     start =(3,3)
 #     end = (50,50)
 #     mapDim = (100,100)
@@ -284,9 +284,10 @@ class Graph(Enviroment):
 #     obsNum = 50
 #     env = Graph(start,end,mapDim,obsDim,obsNum)
 #     env.createGraph()
-#     env.createRandomObstacles()  
-#     env.RRT(500,5)     
-#     # env.createRandomNodes()
-#     # env.connectAllNodes()
-#     env.showMap(True) 
+#     env.createRandomObstacles() 
+
+#     start_time = time.time()
+#     env.RRT_star(2000,5)  
+#     print("--- %s seconds ---" % (time.time() - start_time))    
+#     env.showMap(True,env.path)
  
