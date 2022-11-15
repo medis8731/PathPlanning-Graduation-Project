@@ -2,9 +2,6 @@ import numpy as np
 class Line():
     def __init__(self, p0, p1):
         self.p = np.array(p0)
-
-    def path(self, t):
-        return self.p + t * self.dirn
         
     def Intersection(self,node1,node2,recXY,obsDim) :
         x1,y1 = node1
@@ -37,21 +34,5 @@ class Line():
         if (x > minX and x < maxX): return True
 
         return False; 
-#   def Intersection(self, center, radius):
-#     ''' Check line-sphere (circle) intersection '''
-#     a = np.dot(self.dirn, self.dirn)
-#     b = 2 * np.dot(self.dirn, self.p - center)
-#     c = np.dot(self.p - center, self.p - center) - radius * radius
 
-#     discriminant = b * b - 4 * a * c
-#     if discriminant < 0:
-#         return False
-
-#     t1 = (-b + np.sqrt(discriminant)) / (2 * a)
-#     t2 = (-b - np.sqrt(discriminant)) / (2 * a)
-
-#     if (t1 < 0 and t2 < 0) or (t1 > self.dist and t2 > self.dist):
-#         return False
-
-#     return True 
 

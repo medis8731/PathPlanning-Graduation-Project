@@ -63,9 +63,4 @@ class Enviroment:
 
         return (cornerDistance_sq <= (cirR**2))
 
- 
-
-# env = Enviroment((3,3),(50,50),(100,100),(6,6),50)
-# env.createRandomObstacles()
-# env.showMap(True) 
 

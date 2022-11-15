@@ -1,10 +1,11 @@
+import time
 from matplotlib import pyplot as plt
 import matplotlib
 from matplotlib.patches import Circle, Rectangle
 from matplotlib import collections  as mc
 import random
 
-class Solution(): 
+class SolutionV2(): 
     def __init__(self, paths, costs, items,obstacles):
         self.paths = paths
         self.costs = costs
@@ -13,7 +14,9 @@ class Solution():
         number_of_colors = len(items)
         self.colors = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in range(number_of_colors)]
     
+   
     def showAllPaths(self):
+
         # plt.figure(i)
         self.fig ,self.ax = plt.subplots()
         self.ax.set_xlim(0,100)
@@ -37,3 +40,7 @@ class Solution():
                 self.ax.add_collection(lc2)
             i+=1     
         plt.show()    
+
+
+
+ 

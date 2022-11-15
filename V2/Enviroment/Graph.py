@@ -8,8 +8,9 @@ from matplotlib import collections  as mc
 from Line import Line
 from collections import deque
 import time
-
-from Solution import Solution
+from ortools.constraint_solver import routing_enums_pb2
+from ortools.constraint_solver import pywrapcp
+from SolutionV2 import SolutionV2
 """
 This is version 2 of my implementation for the RRT algorithm. 
 In this version I want to have a list of goals and simultaneasly try to get to each of the goals 
@@ -32,7 +33,7 @@ class Graph(Enviroment):
         self.nodeR = 1
         self.path = {k: None for k in self.goal}
         self.pathCost = {}
-
+        self.DistanceMatrix = [0 for i in goal]
     def add_vex(self, pos):
         try: #Check to see if Vertex already exists 
             idx = self.vex2idx[pos]
@@ -240,6 +241,7 @@ class Graph(Enviroment):
 
                     # print(self.distances[endidx])
                     self.pathCost[goal[i]] = self.distances[endidx]
+                    self.DistanceMatrix[i] = np.floor(self.distances[endidx]).astype(int)
                     # print(self.pathCost[goal[i]])
                 # print('success')
                 # break
@@ -271,7 +273,9 @@ class Graph(Enviroment):
                 # print("trying")
                 self.ax.add_collection(lc2) 
         # plt.show()
-listt = [(5,5),(50,50),(80,80),(10,70),(15,20),(90,10)]
+
+
+listt = [(5,5),(50,50),(10,70),(15,20),(90,10),(80,80)]
 mapDim = (100,100)
 obsDim = (6,6)
 obsNum = 50
@@ -279,29 +283,79 @@ paths = {}
 costs = {}
 tic = time.perf_counter()
 start = listt[0]
+distanceMatrix = []
 goal = listt.copy()
 goal.pop(0)
 env = Graph(start,goal,mapDim,obsDim,obsNum)
 env.createGraph()
 env.createRandomObstacles() 
+env.RRT_star(500,5) 
+# print(env.pathCost) 
+costs[start] = env.pathCost
+paths[start] = env.path.copy() 
+env.showMap() 
+env.DistanceMatrix.insert(0,0)
+distanceMatrix.insert(0,env.DistanceMatrix)
 for i in range(1,len(listt)):
-    env.RRT_star(2000,5) 
-    # print(env.pathCost) 
-    costs[start] = env.pathCost
-    paths[start] = env.path.copy() 
-    env.showMap() 
     start = listt[i]
     goal = listt.copy()
     goal.pop(i)
     env = Graph(start,goal,mapDim,obsDim,obsNum)
-    
     env.createGraph()
+    env.RRT_star(500,5) 
+    # print(env.pathCost) 
+    costs[start] = env.pathCost
+    paths[start] = env.path.copy() 
+    env.showMap() 
+    env.DistanceMatrix.insert(i,0)
+    distanceMatrix.insert(i,env.DistanceMatrix)
     
 toc = time.perf_counter()
-print(f"Downloaded the tutorial in {toc - tic:0.4f} seconds")    
+print(f"The RRT took a total of {toc - tic:0.4f} seconds")    
 plt.show()   
-sol = Solution(paths,costs,listt,env.obs)    
+sol = SolutionV2(paths,distanceMatrix,listt,env.obs)    
 sol.showAllPaths()
 
+def distance_callback(from_index, to_index):
+    """Returns the distance between the two nodes."""
+    # Convert from routing variable Index to distance matrix NodeIndex.
+    from_node = manager.IndexToNode(from_index)
+    to_node = manager.IndexToNode(to_index)
+    return data['distance_matrix'][from_node][to_node]
+
+def create_data_model():
+    """Stores the data for the problem."""
+    data = {}
+    data['distance_matrix'] = distanceMatrix
+    data['num_vehicles'] = 1
+    data['depot'] = 0
+    return data
+
+def print_solution(manager, routing, solution):
+    """Prints solution on console."""
+    print('Objective cost: {} '.format(solution.ObjectiveValue()))
+    index = routing.Start(0)
+    plan_output = 'Route for cart 0:\n'
+    route_distance = 0
+    while not routing.IsEnd(index):
+        plan_output += ' {} ->'.format(manager.IndexToNode(index))
+        previous_index = index
+        index = solution.Value(routing.NextVar(index))
+        route_distance += routing.GetArcCostForVehicle(previous_index, index, 0)
+    plan_output += ' {}\n'.format(manager.IndexToNode(index))
+    print(plan_output)
+    plan_output += 'Route distance: {}costs\n'.format(route_distance)
+
+data = create_data_model()
+manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']),data['num_vehicles'], data['depot'])
+routing = pywrapcp.RoutingModel(manager)
+transit_callback_index = routing.RegisterTransitCallback(distance_callback) 
+routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+search_parameters.first_solution_strategy = (
+    routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)   
+solution = routing.SolveWithParameters(search_parameters)
+if solution:
+    print_solution(manager, routing, solution)   
 
    
